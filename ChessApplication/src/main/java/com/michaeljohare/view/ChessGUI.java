@@ -1,6 +1,5 @@
 package com.michaeljohare.view;
 
-import com.michaeljohare.controller.ChessController;
 import com.michaeljohare.controller.ChessGUIListener;
 import com.michaeljohare.model.ChessPiece;
 import com.michaeljohare.model.Square;
