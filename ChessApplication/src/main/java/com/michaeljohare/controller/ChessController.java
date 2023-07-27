@@ -6,7 +6,6 @@ import com.michaeljohare.model.Player;
 import com.michaeljohare.model.Square;
 import com.michaeljohare.model.pieces.*;
 import com.michaeljohare.view.ChessControllerListener;
-import com.michaeljohare.view.ChessGUI;
 
 import java.awt.*;
 import java.util.List;
@@ -18,9 +17,11 @@ public class ChessController implements ChessControllerListener {
     private final Player player1;
     private final Player player2;
     private int turnCounter;
-    private boolean previousMoveWasCastle = false;
-    private boolean isFirstClick = true;
-    private boolean pawnPromotionFlag = false;
+    private boolean player1HasCastled;
+    private boolean player2HasCastled;
+    private boolean previousMoveWasCastle;
+    private boolean isFirstClick;
+    private boolean pawnPromotionFlag;
     private ChessPiece playerPiece;
     private ChessPiece capturedPiece;
     private ChessPiece previousPiece;
@@ -30,6 +31,8 @@ public class ChessController implements ChessControllerListener {
         player1 = new Player(Board.PLAYER_1);
         player2 = new Player(Board.PLAYER_2);
         turnCounter = 0;
+        player1HasCastled = false;
+        player2HasCastled = false;
         previousMoveWasCastle = false;
         isFirstClick = true;
         pawnPromotionFlag = false;
@@ -43,19 +46,19 @@ public class ChessController implements ChessControllerListener {
     public void handleSquareClick(int row, int col) {
         if (isFirstClick) {
             handleFirstClick(row, col);
-        } else {
-            Square targetSquare = new Square(row, col);
-            if (playerPiece.getMoves().contains(targetSquare)) {
-                previousMoveWasCastle = false;
-                if (!isEmpty(row, col)) {
-                    handleSecondClickCapture(row, col);
-                } else {
-                    handleSecondClickNonCaptureOrCastle(row, col);
-                }
-                handleLegalMove(row);
+            return;
+        }
+        Square targetSquare = new Square(row, col);
+        if (playerPiece.getMoves().contains(targetSquare)) {
+            previousMoveWasCastle = false;
+            if (!isEmpty(row, col)) {
+                handleSecondClickCapture(row, col);
             } else {
-                handleIllegalMove();
+                handleSecondClickNonCaptureOrCastle(row, col);
             }
+            handleLegalMove(row);
+        } else {
+            handleIllegalMove();
         }
     }
 
@@ -66,6 +69,8 @@ public class ChessController implements ChessControllerListener {
         player2.resetPlayer(PLAYER_2);
         turnCounter = 0;
         previousMoveWasCastle = false;
+        player1HasCastled = false;
+        player2HasCastled = false;
         isFirstClick = true;
         capturedPiece = null;
         playerPiece = null;
@@ -76,6 +81,7 @@ public class ChessController implements ChessControllerListener {
 
     @Override
     public void handleUndoButtonClick() {
+        boolean wasUndoSuccessful = false;
         if (turnCounter > 0) {
             try {
                 if (capturedPiece != null) {
@@ -83,34 +89,45 @@ public class ChessController implements ChessControllerListener {
                 } else {
                     handleUndoNonCaptureOrCastle();
                 }
+                wasUndoSuccessful = true;
             } catch (Exception e) {
                 gui.updateLogTextArea(lineBreaks + " You can only undo a previous move \n one time!");
-                turnCounter++;
+                if (previousMoveWasCastle && turnCounter % 2 == 0) {
+                    player1HasCastled = false;
+                }
+                if (previousMoveWasCastle && turnCounter % 2 == 1) {
+                    player2HasCastled = false;
+                }
             }
-            handleLegalUndo();
+            if (wasUndoSuccessful) {
+                handleLegalUndo();
+            }
         }
     }
 
     private void handleFirstClick(int row, int col) {
         if (turnCounter % 2 == 0) {
             playerPiece = player1.getPlayerPiece(new Square(row, col));
-        } else if (turnCounter % 2 == 1) {
+        } else {
             playerPiece = player2.getPlayerPiece(new Square(row, col));
         }
+
         if (playerPiece == null) {
             gui.updateLogTextArea(lineBreaks + " There's no piece available in the\n selected square, or the " +
                     "piece you\n selected is not your piece.");
-        } else {
-            List<Square> moves = playerPiece.getMoves();
-            if (moves.size() == 0) {
-                gui.updateLogTextArea(lineBreaks + " The piece you selected does not\n have any legal moves");
-                playerPiece = null;
-                isFirstClick = true;
-            }else {
-                gui.setHighlightedSquares(moves);
-                isFirstClick = false;
-            }
+            return;
         }
+
+        List<Square> moves = playerPiece.getMoves();
+        if (moves.size() == 0) {
+            gui.updateLogTextArea(lineBreaks + " The piece you selected does not\n have any legal moves");
+            playerPiece = null;
+            isFirstClick = true;
+            return;
+        }
+
+        gui.setHighlightedSquares(moves);
+        isFirstClick = false;
     }
 
     private void handleSecondClickCapture(int row, int col) {
@@ -139,24 +156,28 @@ public class ChessController implements ChessControllerListener {
         playerPiece.movePiece(new Square(row, col));
 
         if (playerPiece instanceof King) {
-            if (turnCounter % 2 == 0 && row == 7 && col == 6) {
+            if (turnCounter % 2 == 0 && !player1HasCastled && row == 7 && col == 6) {
                 player1.getPlayerPiece(new Square(7, 7)).movePiece(new Square(7, 5));
                 ((Rook) player1.getPlayerPiece(new Square(7, 5))).hasMoved = true;
+                player1HasCastled = true;
                 previousMoveWasCastle = true;
             }
-            if (turnCounter % 2 == 0 && row == 7 && col == 2) {
+            if (turnCounter % 2 == 0 && !player1HasCastled && row == 7 && col == 2) {
                 player1.getPlayerPiece(new Square(7, 0)).movePiece(new Square(7, 3));
                 ((Rook) player1.getPlayerPiece(new Square(7, 3))).hasMoved = true;
+                player1HasCastled = true;
                 previousMoveWasCastle = true;
             }
-            if (turnCounter % 2 == 1 && row == 0 && col == 6) {
+            if (turnCounter % 2 == 1  && !player2HasCastled && row == 0 && col == 6) {
                 player2.getPlayerPiece(new Square(0, 7)).movePiece(new Square(0, 5));
                 ((Rook) player2.getPlayerPiece(new Square(0, 5))).hasMoved = true;
+                player2HasCastled = true;
                 previousMoveWasCastle = true;
             }
-            if (turnCounter % 2 == 1 && row == 0 && col == 2) {
+            if (turnCounter % 2 == 1  && !player2HasCastled && row == 0 && col == 2) {
                 player2.getPlayerPiece(new Square(0, 0)).movePiece(new Square(0, 3));
                 ((Rook) player2.getPlayerPiece(new Square(0, 3))).hasMoved = true;
+                player2HasCastled = true;
                 previousMoveWasCastle = true;
             }
             ((King) playerPiece).hasMoved = true;
@@ -251,17 +272,21 @@ public class ChessController implements ChessControllerListener {
             if (board[7][5].equals(ROOK + PLAYER_1)) {
                 ((Rook) player1.getPlayerPiece(new Square(7, 5))).hasMoved = false;
                 player1.getPlayerPiece(new Square(7, 5)).undoMovePiece(EMPTY);
+                player1HasCastled = false;
             } else if (board[7][3].equals(ROOK + PLAYER_1)) {
                 ((Rook) player1.getPlayerPiece(new Square(7, 3))).hasMoved = false;
                 player1.getPlayerPiece(new Square(7, 3)).undoMovePiece(EMPTY);
+                player1HasCastled = false;
             }
         } else if (turnCounter % 2 == 0 && previousMoveWasCastle){
             if (board[0][5].equals(ROOK + PLAYER_2)) {
                 ((Rook) player2.getPlayerPiece(new Square(0, 5))).hasMoved = false;
                 player2.getPlayerPiece(new Square(0, 5)).undoMovePiece(EMPTY);
+                player2HasCastled = false;
             } else if (board[0][3].equals(ROOK + PLAYER_2)) {
                 ((Rook) player2.getPlayerPiece(new Square(0, 3))).hasMoved = false;
                 player2.getPlayerPiece(new Square(0, 3)).undoMovePiece(EMPTY);
+                player2HasCastled = false;
             }
         }
         previousPiece.undoMovePiece(EMPTY);
@@ -272,6 +297,7 @@ public class ChessController implements ChessControllerListener {
         gui.updateGUI();
         turnCounter--;
         playerPiece = null;
+        isFirstClick = true;
         if (turnCounter % 2 == 0) {
             gui.updateLogTextArea(lineBreaks + " It's the white player's turn to move.");
         } else if (turnCounter % 2 == 1) {

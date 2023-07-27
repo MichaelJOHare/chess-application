@@ -3,7 +3,6 @@ package com.michaeljohare.controller;
 import com.michaeljohare.model.ChessPiece;
 import com.michaeljohare.model.Square;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
