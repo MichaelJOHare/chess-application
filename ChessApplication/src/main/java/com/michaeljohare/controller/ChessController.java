@@ -25,6 +25,8 @@ public class ChessController implements ChessControllerListener {
     private ChessPiece playerPiece;
     private ChessPiece capturedPiece;
     private ChessPiece previousPiece;
+    private ChessPiece previouslyPromotedPawn;
+    private ChessPiece promotedPiece;
     private final String lineBreaks = "\n\n\n\n\n";
 
     public ChessController() {
@@ -100,6 +102,9 @@ public class ChessController implements ChessControllerListener {
                 }
             }
             if (wasUndoSuccessful) {
+                if (previousPiece instanceof Pawn) {
+                    handleUndoPawnPromotion();
+                }
                 handleLegalUndo();
             }
         }
@@ -222,11 +227,12 @@ public class ChessController implements ChessControllerListener {
 
         if (pawnPromotionFlag) {
             if (playerPiece instanceof Pawn && (row == 0 || row == 7)) {
+                previouslyPromotedPawn = playerPiece;
                 String[] options = {"Queen", "Rook", "Bishop", "Knight"};
                 int choice = gui.createPromotionPane(playerPiece);
                 if (choice >= 0 && choice < options.length) {
                     String selectedPiece = options[choice];
-                    ((Pawn) playerPiece).promoteTo(selectedPiece);
+                    promotedPiece = ((Pawn) playerPiece).promoteTo(selectedPiece);
                 }
             }
         }
@@ -302,6 +308,16 @@ public class ChessController implements ChessControllerListener {
             gui.updateLogTextArea(lineBreaks + " It's the white player's turn to move.");
         } else if (turnCounter % 2 == 1) {
             gui.updateLogTextArea(lineBreaks+ " It's the black player's turn to move.");
+        }
+    }
+
+    private void handleUndoPawnPromotion() {
+        if (previouslyPromotedPawn != null) {
+            if (turnCounter % 2 == 1) {
+                player1.unPromotePawn(previouslyPromotedPawn, promotedPiece);
+            } else {
+                player2.unPromotePawn(previouslyPromotedPawn, promotedPiece);
+            }
         }
     }
 

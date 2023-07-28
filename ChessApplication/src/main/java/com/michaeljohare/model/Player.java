@@ -111,4 +111,16 @@ public class Player {
             }
         }
     }
+
+    public void unPromotePawn(ChessPiece previouslyPromotedPawn, ChessPiece promotedPiece) {
+        Board.board[previouslyPromotedPawn.getCurrentSquare().getX()][previouslyPromotedPawn.getCurrentSquare().getY()] =
+                previouslyPromotedPawn.getChessPieceConstant() + getPlayer();
+
+        for (int i = 0; i < 16; i++) {
+            if (playerPieces[i].getCurrentSquare().equals(promotedPiece.getCurrentSquare())) {
+                playerPieces[i] = previouslyPromotedPawn;
+                break;
+            }
+        }
+    }
 }

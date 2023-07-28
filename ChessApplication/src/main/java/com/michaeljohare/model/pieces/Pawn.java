@@ -93,7 +93,7 @@ public class Pawn extends ChessPiece {
         return availableMoves;
     }
 
-    public void promoteTo(String pieceType) {
+    public ChessPiece promoteTo(String pieceType) {
         ChessPiece promotedPiece;
 
         switch (pieceType) {
@@ -114,6 +114,7 @@ public class Pawn extends ChessPiece {
         }
 
         player.promotePawn(this, promotedPiece);
+        return promotedPiece;
     }
 
     @Override

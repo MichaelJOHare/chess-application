@@ -31,7 +31,6 @@ public class Main {
     *  Implement Stockfish?
     *  Implement en passant
     *  Implement Stalemate
-    *  Fix Undo Pawn Promotion bug
     *  Figure out how to reproduce random NullPointerException bug
     * */
 }

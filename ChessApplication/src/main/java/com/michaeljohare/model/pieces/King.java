@@ -261,8 +261,7 @@ public class King extends ChessPiece {
                     undoMovePiece(EMPTY);
                     rook.undoMovePiece(EMPTY);
                 }
-            }
-            else if(!player.getKing().isInCheck() && y < 6 && isEmpty(x, y+2) &&
+            } else if(!player.getKing().isInCheck() && y < 6 && isEmpty(x, y+2) &&
                     currentSquare.equals(new Square(0, 4)) && !hasMoved && board[0][7].equals(ROOK + PLAYER_2)) {
                 Rook rook = (Rook)player.getPlayerPiece(new Square(0,7));
                 if(rook.isAbleToCastle()) {
@@ -298,8 +297,7 @@ public class King extends ChessPiece {
                     undoMovePiece(EMPTY);
                     rook.undoMovePiece(EMPTY);
                 }
-            }
-            else if(!player.getKing().isInCheck() && y>1 && isEmpty(x, y-2) &&
+            } else if(!player.getKing().isInCheck() && y>1 && isEmpty(x, y-2) &&
                     currentSquare.equals(new Square(0, 4)) && !hasMoved && board[0][0].equals(ROOK + PLAYER_2)) {
                 Rook rook = (Rook)player.getPlayerPiece(new Square(0,0));
                 if(rook.isAbleToCastle()) {
