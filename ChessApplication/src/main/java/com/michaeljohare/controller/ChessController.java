@@ -9,6 +9,7 @@ import com.michaeljohare.view.ChessControllerListener;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Stack;
 
 import static com.michaeljohare.model.Board.*;
 
@@ -25,6 +26,7 @@ public class ChessController implements ChessControllerListener {
     private ChessPiece playerPiece;
     private ChessPiece capturedPiece;
     private ChessPiece previousPiece;
+    private Stack<ChessPiece> previousPieces;
     private ChessPiece previouslyPromotedPawn;
     private ChessPiece promotedPiece;
     private final String lineBreaks = "\n\n\n\n\n";
@@ -77,6 +79,8 @@ public class ChessController implements ChessControllerListener {
         capturedPiece = null;
         playerPiece = null;
         previousPiece = null;
+        previouslyPromotedPawn = null;
+        promotedPiece = null;
         gui.updateLogTextArea(lineBreaks + " Welcome to Michael's Chess Game! \n Use the undo button to undo a \n previous move. " +
                 "\n\n It is White's turn to move first.");
     }
@@ -160,7 +164,11 @@ public class ChessController implements ChessControllerListener {
         capturedPiece = null;
         playerPiece.movePiece(new Square(row, col));
 
-        if (playerPiece instanceof King) {
+        //BUG if player moves king around, doesn't castle then moves to square where it lands from castling after their
+        //    rook has been captured - throws NullPointerException
+        //  Added  && !((King) playerPiece).hasMoved - may not need playerHasCastledFlags? May still need them for undo
+
+        if (playerPiece instanceof King && !((King) playerPiece).hasMoved) {
             if (turnCounter % 2 == 0 && !player1HasCastled && row == 7 && col == 6) {
                 player1.getPlayerPiece(new Square(7, 7)).movePiece(new Square(7, 5));
                 ((Rook) player1.getPlayerPiece(new Square(7, 5))).hasMoved = true;
@@ -241,19 +249,21 @@ public class ChessController implements ChessControllerListener {
     }
 
     private void handleCheckmate() {
+        Player currentPlayer = (turnCounter % 2 == 0) ? player1 : player2;
+        int currentPlayerNumber = (turnCounter % 2 == 0) ? 2 : 1;
 
-        if ((turnCounter % 2 == 0 && player1.getKing().isInCheck())
-                || (turnCounter % 2 == 1 && player2.getKing().isInCheck())) {
+        if (currentPlayer.getKing().isInCheck()) {
             gui.updateLogTextArea(lineBreaks + " Check!");
         }
 
-        if ((turnCounter % 2 == 0 && player1.getMoves().size() == 0) ||
-                (turnCounter % 2 == 1 && player2.getMoves().size() == 0)) {
-            if (turnCounter % 2 == 0) {
-                gui.updateLogTextArea(lineBreaks + "     Player 2 has won the game!\n\n\tPlay again?");
+        if (currentPlayer.getMoves().isEmpty()) {
+            String message;
+            if (currentPlayer.getKing().isInCheck()) {
+                message = String.format("     Player %d has won the game!", currentPlayerNumber);
             } else {
-                gui.updateLogTextArea(lineBreaks + "     Player 1 has won the game!\n\n\tPlay again?");
+                message = "                 Stalemate (tie)!";
             }
+            gui.updateLogTextArea(lineBreaks + message + "\n\n\tPlay again?");
             gui.updatePlayAgainButton(Color.GREEN, Color.BLACK);
         }
     }
@@ -298,6 +308,18 @@ public class ChessController implements ChessControllerListener {
         previousPiece.undoMovePiece(EMPTY);
     }
 
+    private void handleUndoPawnPromotion() {
+        if (previouslyPromotedPawn != null) {
+            if (turnCounter % 2 == 1) {
+                player1.unPromotePawn(previouslyPromotedPawn, promotedPiece);
+            } else {
+                player2.unPromotePawn(previouslyPromotedPawn, promotedPiece);
+            }
+            previouslyPromotedPawn = null;
+            promotedPiece = null;
+        }
+    }
+
     private void handleLegalUndo() {
         gui.updateCapturedPiecesDisplay();
         gui.updateGUI();
@@ -308,16 +330,6 @@ public class ChessController implements ChessControllerListener {
             gui.updateLogTextArea(lineBreaks + " It's the white player's turn to move.");
         } else if (turnCounter % 2 == 1) {
             gui.updateLogTextArea(lineBreaks+ " It's the black player's turn to move.");
-        }
-    }
-
-    private void handleUndoPawnPromotion() {
-        if (previouslyPromotedPawn != null) {
-            if (turnCounter % 2 == 1) {
-                player1.unPromotePawn(previouslyPromotedPawn, promotedPiece);
-            } else {
-                player2.unPromotePawn(previouslyPromotedPawn, promotedPiece);
-            }
         }
     }
 

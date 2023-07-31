@@ -69,6 +69,7 @@ public class ChessGUI extends JFrame implements ChessGUIListener {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 chessButtons[row][col] = new JButton();
+
                 if (row % 2 == 0) {
                     if (col % 2 == 0) {
                         chessButtons[row][col].setBackground(new Color(248, 240, 198));
@@ -82,6 +83,7 @@ public class ChessGUI extends JFrame implements ChessGUIListener {
                         chessButtons[row][col].setBackground(new Color(156, 98, 69));
                     }
                 }
+
                 updateButton(row, col);
                 final int finalRow = row;
                 final int finalCol = col;
