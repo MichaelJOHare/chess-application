@@ -5,6 +5,9 @@ import com.michaeljohare.model.pieces.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.michaeljohare.model.Board.EMPTY;
+import static com.michaeljohare.model.Board.board;
+
 public class Player {
     private String player;
     private ChessPiece[] playerPieces = new ChessPiece[16];
@@ -91,6 +94,17 @@ public class Player {
             }
         }
     }
+
+    public void captureEnPassant(ChessPiece piece) {
+        for (int i = 0; i < 16; i++) {
+            if (playerPieces[i].equals(piece) && playerPieces[i].isAlive()) {
+                playerPieces[i].capture();
+                break;
+            }
+        }
+        board[piece.getCurrentSquare().getX()][piece.getCurrentSquare().getY()] = EMPTY;
+    }
+
     public void undoCapturePiece(ChessPiece piece) {
         for (int i = 0; i < 16; i++) {
             if (!playerPieces[i].equals(piece) && playerPieces[i].isAlive()) {

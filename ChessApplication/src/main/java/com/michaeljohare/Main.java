@@ -26,10 +26,11 @@ public class Main {
 
     /*
     * TODO:
-    *  Implement A-F 1-8 Legend
     *  Implement undoing more than 1 move
     *  Implement Stockfish?
-    *  Implement en passant
-    *  Figure out how to reproduce random NullPointerException bug
+    *  Implement undoing en passant
+    *  Check king long castling through check
+    *  Test and debug en passant
+    *  Refactor ChessController?
     * */
 }

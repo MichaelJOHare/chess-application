@@ -1,17 +1,20 @@
 package com.michaeljohare.model;
 
 import java.util.List;
+import java.util.Stack;
 
 import static com.michaeljohare.model.Board.*;
 
 public abstract class ChessPiece {
     protected Square lastSquare, currentSquare;
+    protected Stack<Square> previousSquares;
     protected Player player;
     private boolean isAlive;
 
     public ChessPiece(Square currentSquare, Player player) {
         this.lastSquare = null;
         this.currentSquare = currentSquare;
+        this.previousSquares = new Stack<>();
         this.player = player;
         isAlive = true;
     }
@@ -25,11 +28,18 @@ public abstract class ChessPiece {
         board[end.getX()][end.getY()] = getChessPieceConstant() + player.getPlayer();
         board[currentSquare.getX()][currentSquare.getY()] = EMPTY;
         lastSquare = currentSquare;
+        previousSquares.push(lastSquare);
         currentSquare = end;
     }
     public void undoMovePiece(String piece) {
         board[lastSquare.getX()][lastSquare.getY()] = getChessPieceConstant() + player.getPlayer();
         board[currentSquare.getX()][currentSquare.getY()] = piece;
+        currentSquare = lastSquare;
+        lastSquare = null;
+    }
+    public void undoEnPassant(String piece, int player1PlusPlayer2Minus) {
+        board[lastSquare.getX()][lastSquare.getY()] = getChessPieceConstant() + player.getPlayer();
+        board[currentSquare.getX() + player1PlusPlayer2Minus][currentSquare.getY()] = piece;
         currentSquare = lastSquare;
         lastSquare = null;
     }

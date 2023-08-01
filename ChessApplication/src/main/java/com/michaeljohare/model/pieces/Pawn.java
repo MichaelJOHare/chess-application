@@ -12,9 +12,17 @@ import static com.michaeljohare.model.Board.*;
 public class Pawn extends ChessPiece {
     public static final String BLACK_PAWN = "♟";
     public static final String WHITE_PAWN = "♙";
+    public boolean canCaptureEnPassantRight;
+    public boolean canCaptureEnPassantLeft;
 
     public Pawn(Square currentSquare, Player player) {
         super(currentSquare, player);
+        this.canCaptureEnPassantRight = false;
+        this.canCaptureEnPassantLeft = false;
+    }
+
+    public boolean isEnPassantVulnerable() {
+        return Math.abs(currentSquare.getX() - previousSquares.peek().getX()) == 2;
     }
 
     @Override
@@ -45,7 +53,7 @@ public class Pawn extends ChessPiece {
                 }
                 undoMovePiece(piece);
             }
-            if (y > 0 && x > 0 && !isEmpty(x - 1, y - 1) &&
+            if (x > 0 && y > 0 && !isEmpty(x - 1, y - 1) &&
                     !player.getPlayer().equals(board[x - 1][y - 1].substring(1))) {
                 String piece = board[x - 1][y - 1];
                 movePiece(new Square(x - 1, y - 1));
@@ -53,6 +61,22 @@ public class Pawn extends ChessPiece {
                     availableMoves.add(new Square(x - 1, y - 1));
                 }
                 undoMovePiece(piece);
+            }
+
+            // En passant Player1
+            if (canCaptureEnPassantRight) {
+                if (x > 0 && y < 7 && !isEmpty(x, y + 1) && isEmpty(x - 1, y + 1) && board[x][y + 1].equals(PAWN + PLAYER_2)) {
+                    String piece = board[x][y + 1];
+                    movePiece(new Square(x - 1, y + 1));
+                    board[x - 1][y + 1] = EMPTY;
+                    if (!player.getKing().isInCheck()) {
+                        availableMoves.add(new Square(x - 1, y + 1));
+                    }
+                    undoEnPassant(piece, 1);
+                }
+            }
+            if (canCaptureEnPassantLeft) {
+
             }
         }
 

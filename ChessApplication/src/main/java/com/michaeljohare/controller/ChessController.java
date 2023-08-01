@@ -23,6 +23,7 @@ public class ChessController implements ChessControllerListener {
     private boolean previousMoveWasCastle;
     private boolean isFirstClick;
     private boolean pawnPromotionFlag;
+    private boolean enPassantFlag;
     private ChessPiece playerPiece;
     private ChessPiece capturedPiece;
     private ChessPiece previousPiece;
@@ -40,6 +41,7 @@ public class ChessController implements ChessControllerListener {
         previousMoveWasCastle = false;
         isFirstClick = true;
         pawnPromotionFlag = false;
+        enPassantFlag = false;
     }
 
     public void setGUI(ChessGUIListener gui) {
@@ -58,8 +60,9 @@ public class ChessController implements ChessControllerListener {
             if (!isEmpty(row, col)) {
                 handleSecondClickCapture(row, col);
             } else {
-                handleSecondClickNonCaptureOrCastle(row, col);
+                handleSecondClick(row, col);
             }
+            checkIfPawnPromotion();
             handleLegalMove(row);
         } else {
             handleIllegalMove();
@@ -79,6 +82,8 @@ public class ChessController implements ChessControllerListener {
         capturedPiece = null;
         playerPiece = null;
         previousPiece = null;
+        pawnPromotionFlag = false;
+        enPassantFlag = false;
         previouslyPromotedPawn = null;
         promotedPiece = null;
         gui.updateLogTextArea(lineBreaks + " Welcome to Michael's Chess Game! \n Use the undo button to undo a \n previous move. " +
@@ -127,6 +132,10 @@ public class ChessController implements ChessControllerListener {
             return;
         }
 
+        if (playerPiece instanceof Pawn && previousPiece != null) {
+            handleEnPassantFlag();
+        }
+
         List<Square> moves = playerPiece.getMoves();
         if (moves.size() == 0) {
             gui.updateLogTextArea(lineBreaks + " The piece you selected does not\n have any legal moves");
@@ -140,6 +149,8 @@ public class ChessController implements ChessControllerListener {
     }
 
     private void handleSecondClickCapture(int row, int col) {
+
+        enPassantFlag = false;
         playerPiece.movePiece(new Square(row, col));
 
         if (turnCounter % 2 == 0) {
@@ -154,19 +165,19 @@ public class ChessController implements ChessControllerListener {
             gui.updateCapturedPiecesDisplay();
         }
 
-        if (playerPiece instanceof Pawn && playerPiece.getCurrentSquare().getX() == 0 ||
-                playerPiece.getCurrentSquare().getX() == 7) {
-            pawnPromotionFlag = true;
-        }
     }
 
-    private void handleSecondClickNonCaptureOrCastle(int row, int col) {
+    private void handleSecondClick(int row, int col) {
+
+        if (enPassantFlag) {
+            if (isEnPassant(row, col)) {
+                return;
+            }
+        }
+
+        enPassantFlag = false;
         capturedPiece = null;
         playerPiece.movePiece(new Square(row, col));
-
-        //BUG if player moves king around, doesn't castle then moves to square where it lands from castling after their
-        //    rook has been captured - throws NullPointerException
-        //  Added  && !((King) playerPiece).hasMoved - may not need playerHasCastledFlags? May still need them for undo
 
         if (playerPiece instanceof King && !((King) playerPiece).hasMoved) {
             if (turnCounter % 2 == 0 && !player1HasCastled && row == 7 && col == 6) {
@@ -197,10 +208,6 @@ public class ChessController implements ChessControllerListener {
         }
 
         if (playerPiece instanceof Rook) ((Rook) playerPiece).hasMoved = true;
-        if (playerPiece instanceof Pawn && playerPiece.getCurrentSquare().getX() == 0 ||
-                playerPiece.getCurrentSquare().getX() == 7) {
-            pawnPromotionFlag = true;
-        }
     }
 
     private void handleLegalMove(int row) {
@@ -211,6 +218,7 @@ public class ChessController implements ChessControllerListener {
         gui.clearHighlightedSquares();
         previousPiece = playerPiece;
         playerPiece = null;
+        enPassantFlag = false;
         isFirstClick = true;
         turnCounter++;
 
@@ -330,6 +338,56 @@ public class ChessController implements ChessControllerListener {
             gui.updateLogTextArea(lineBreaks + " It's the white player's turn to move.");
         } else if (turnCounter % 2 == 1) {
             gui.updateLogTextArea(lineBreaks+ " It's the black player's turn to move.");
+        }
+    }
+
+    private boolean isEnPassant(int row, int col) {
+        if (turnCounter % 2 == 0) {
+            if (enPassantFlag) {
+                playerPiece.movePiece(new Square(row, col));
+                capturedPiece = player2.getPlayerPiece(new Square(row + 1, col));
+                player2.captureEnPassant(capturedPiece);
+                gui.addRemoveCapture1Area(capturedPiece, true);
+                gui.updateCapturedPiecesDisplay();
+                return true;
+            }
+        } else {
+            if (enPassantFlag) {
+                capturedPiece = player1.getPlayerPiece(new Square(row - 1, col));
+                playerPiece.movePiece(new Square(row, col));
+                player1.captureEnPassant(capturedPiece);
+                gui.addRemoveCapture2Area(capturedPiece, true);
+                gui.updateCapturedPiecesDisplay();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void handleEnPassantFlag() {
+        boolean isSameRow = previousPiece.getCurrentSquare().getX() == playerPiece.getCurrentSquare().getX();
+        boolean isLeftSideOfPiece = previousPiece.getCurrentSquare().getY() == playerPiece.getCurrentSquare().getY() - 1;
+        boolean isRightSideOfPiece = previousPiece.getCurrentSquare().getY() == playerPiece.getCurrentSquare().getY() + 1;
+
+        if (((Pawn) previousPiece).isEnPassantVulnerable() && (isSameRow) && (isRightSideOfPiece)) {
+            ((Pawn)playerPiece).canCaptureEnPassantLeft = false;
+            ((Pawn) playerPiece).canCaptureEnPassantRight = true;
+            enPassantFlag = true;
+        } else if (((Pawn) previousPiece).isEnPassantVulnerable() && (isSameRow) && (isLeftSideOfPiece)){
+            ((Pawn)playerPiece).canCaptureEnPassantRight =false;
+            ((Pawn)playerPiece).canCaptureEnPassantLeft = true;
+            enPassantFlag = true;
+        } else {
+            ((Pawn)playerPiece).canCaptureEnPassantLeft = false;
+            ((Pawn)playerPiece).canCaptureEnPassantRight =false;
+            enPassantFlag = false;
+        }
+    }
+
+    private void checkIfPawnPromotion() {
+        if (playerPiece instanceof Pawn && playerPiece.getCurrentSquare().getX() == 0 ||
+                playerPiece.getCurrentSquare().getX() == 7) {
+            pawnPromotionFlag = true;
         }
     }
 

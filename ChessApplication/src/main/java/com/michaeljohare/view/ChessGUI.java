@@ -69,6 +69,7 @@ public class ChessGUI extends JFrame implements ChessGUIListener {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 chessButtons[row][col] = new JButton();
+                chessButtons[row][col].setLayout(new BorderLayout());
 
                 if (row % 2 == 0) {
                     if (col % 2 == 0) {
@@ -88,10 +89,41 @@ public class ChessGUI extends JFrame implements ChessGUIListener {
                 final int finalRow = row;
                 final int finalCol = col;
                 chessButtons[row][col].addActionListener(e -> onSquareClick(finalRow, finalCol));
+
+                createButtonLabels(row, col, chessButtons);
+
                 chessboardPanel.add(chessButtons[row][col]);
             }
         }
         return chessboardPanel;
+    }
+
+    private void createButtonLabels(int row, int col, JButton[][] chessButtons) {
+        if (row == 7) {
+            JLabel letterLabel = new JLabel("abcdefgh".substring(col, col + 1));
+            letterLabel.setFont(new Font("Roboto", Font.BOLD, 16));
+            if (col % 2 == 0) {
+                letterLabel.setForeground(new Color(248, 240, 198));
+            } else {
+                letterLabel.setForeground(new Color(156, 98, 69));
+            }
+            int leftPadding = 5;
+            letterLabel.setBorder(BorderFactory.createEmptyBorder(0, leftPadding, 0, 0));
+            chessButtons[row][col].add(letterLabel, BorderLayout.SOUTH);
+        }
+
+        if (col == 7) {
+            JLabel numberLabel = new JLabel("87654321".substring(row, row + 1), SwingConstants.RIGHT);
+            numberLabel.setFont(new Font("Roboto", Font.BOLD, 16));
+            if (row % 2 == 1) {
+                numberLabel.setForeground(new Color(156, 98, 69));
+            } else {
+                numberLabel.setForeground(new Color(248, 240, 198));
+            }
+            int rightPadding = 5;
+            numberLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, rightPadding));
+            chessButtons[row][col].add(numberLabel, BorderLayout.NORTH);
+        }
     }
 
     private JPanel createRightPanel() {
