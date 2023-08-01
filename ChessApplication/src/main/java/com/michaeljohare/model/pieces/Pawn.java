@@ -68,15 +68,26 @@ public class Pawn extends ChessPiece {
                 if (x > 0 && y < 7 && !isEmpty(x, y + 1) && isEmpty(x - 1, y + 1) && board[x][y + 1].equals(PAWN + PLAYER_2)) {
                     String piece = board[x][y + 1];
                     movePiece(new Square(x - 1, y + 1));
-                    board[x - 1][y + 1] = EMPTY;
+                    // was incorrect
+                    board[x][y + 1] = EMPTY;
                     if (!player.getKing().isInCheck()) {
                         availableMoves.add(new Square(x - 1, y + 1));
                     }
+                    board[x - 1][y + 1] = EMPTY;
                     undoEnPassant(piece, 1);
                 }
             }
             if (canCaptureEnPassantLeft) {
-
+                if (x > 0 && y > 0 && !isEmpty(x, y - 1) && isEmpty(x - 1, y - 1) && board[x][y - 1].equals(PAWN + PLAYER_2)) {
+                    String piece = board[x][y - 1];
+                    movePiece(new Square(x - 1, y - 1));
+                    board[x][y - 1] = EMPTY;
+                    if (!player.getKing().isInCheck()) {
+                        availableMoves.add(new Square(x - 1, y - 1));
+                    }
+                    board[x - 1][y - 1] = EMPTY;
+                    undoEnPassant(piece, 1);
+                }
             }
         }
 
@@ -112,6 +123,32 @@ public class Pawn extends ChessPiece {
                     availableMoves.add(new Square(x + 1, y - 1));
                 }
                 undoMovePiece(piece);
+            }
+
+            // En passant Player2
+            if (canCaptureEnPassantRight) {
+                if (x < 7 && y < 7 && !isEmpty(x, y + 1) && isEmpty(x + 1, y + 1) && board[x][y + 1].equals(PAWN + PLAYER_1)) {
+                    String piece = board[x][y + 1];
+                    movePiece(new Square(x + 1, y + 1));
+                    board[x][y + 1] = EMPTY;
+                    if (!player.getKing().isInCheck()) {
+                        availableMoves.add(new Square(x + 1, y + 1));
+                    }
+                    board[x + 1][y + 1] = EMPTY;
+                    undoEnPassant(piece, -1);
+                }
+            }
+            if (canCaptureEnPassantLeft) {
+                if (x < 7 && y > 0 && !isEmpty(x, y - 1) && isEmpty(x + 1, y - 1) && board[x][y - 1].equals(PAWN + PLAYER_1)) {
+                    String piece = board[x][y - 1];
+                    movePiece(new Square(x + 1, y - 1));
+                    board[x][y - 1] = EMPTY;
+                    if (!player.getKing().isInCheck()) {
+                        availableMoves.add(new Square(x + 1, y - 1));
+                    }
+                    board[x + 1][y - 1] = EMPTY;
+                    undoEnPassant(piece, -1);
+                }
             }
         }
         return availableMoves;
