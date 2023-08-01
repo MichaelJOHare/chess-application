@@ -29,8 +29,7 @@ public class Main {
     *  Implement undoing more than 1 move
     *  Implement Stockfish?
     *  Implement undoing en passant
-    *  Check king long castling through check
-    *  Test and debug en passant
+    *  Test and debug en passant (undo en passant)
     *  Refactor ChessController?
     * */
 }

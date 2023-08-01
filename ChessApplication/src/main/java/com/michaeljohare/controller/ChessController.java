@@ -132,7 +132,7 @@ public class ChessController implements ChessControllerListener {
             return;
         }
 
-        if (playerPiece instanceof Pawn && previousPiece != null) {
+        if (playerPiece instanceof Pawn && previousPiece instanceof Pawn) {
             handleEnPassantFlag();
         }
 
@@ -169,7 +169,7 @@ public class ChessController implements ChessControllerListener {
 
     private void handleSecondClick(int row, int col) {
 
-        if (enPassantFlag) {
+        if (enPassantFlag && playerPiece instanceof Pawn) {
             if (isEnPassant(row, col)) {
                 return;
             }

@@ -240,7 +240,7 @@ public class King extends ChessPiece {
         }
 
         // Castling rights + do or not do castling
-        // (First check king can not castle through check)
+        // (First check king can not castle through check short castle)
         if (y < 7 && isEmpty(x, y + 1)) {
             movePiece(new Square(x, y + 1));
             if (!player.getKing().isInCheck()) {
@@ -289,28 +289,38 @@ public class King extends ChessPiece {
                 if (!player.getKing().isInCheck() && y > 1 && isEmpty(x, y - 2) &&
                         currentSquare.equals(new Square(7, 4)) && !hasMoved && board[7][0].equals(ROOK + PLAYER_1)) {
                     Rook rook = (Rook)player.getPlayerPiece(new Square(7,0));
-                    if(rook.isAbleToCastle()) {
-                        movePiece(new Square(7, 2));
-                        rook.movePiece(new Square(7,3));
-                    }
-                    if(!player.getKing().isInCheck()) {
-                        availableMoves.add(new Square(7,2));
+                    // check for long castling through check
+                    movePiece(new Square(x, y - 1));
+                    if (!player.getKing().isInCheck()) {
+                        undoMovePiece(EMPTY);
+                        if (rook.isAbleToCastle()) {
+                            movePiece(new Square(7, 2));
+                            rook.movePiece(new Square(7, 3));
+                        }
+                        if (!player.getKing().isInCheck()) {
+                            availableMoves.add(new Square(7, 2));
+                        }
+                        undoMovePiece(EMPTY);
+                        rook.undoMovePiece(EMPTY);
                     }
                     undoMovePiece(EMPTY);
-                    rook.undoMovePiece(EMPTY);
                 }
             } else if(!player.getKing().isInCheck() && y > 1 && isEmpty(x, y - 2) &&
                     currentSquare.equals(new Square(0, 4)) && !hasMoved && board[0][0].equals(ROOK + PLAYER_2)) {
                 Rook rook = (Rook)player.getPlayerPiece(new Square(0,0));
-                if(rook.isAbleToCastle()) {
-                    movePiece(new Square(0, 2));
-                    rook.movePiece(new Square(0,3));
-                }
-                if(!player.getKing().isInCheck()) {
-                    availableMoves.add(new Square(0,2));
+                movePiece(new Square(x, y -1));
+                if (!player.getKing().isInCheck()) {
+                    if (rook.isAbleToCastle()) {
+                        movePiece(new Square(0, 2));
+                        rook.movePiece(new Square(0, 3));
+                    }
+                    if (!player.getKing().isInCheck()) {
+                        availableMoves.add(new Square(0, 2));
+                    }
+                    undoMovePiece(EMPTY);
+                    rook.undoMovePiece(EMPTY);
                 }
                 undoMovePiece(EMPTY);
-                rook.undoMovePiece(EMPTY);
             }
         }
 
