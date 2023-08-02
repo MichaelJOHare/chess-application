@@ -40,6 +40,7 @@ public abstract class ChessPiece {
     public void undoEnPassant(String piece, int player1PlusPlayer2Minus) {
         board[lastSquare.getX()][lastSquare.getY()] = getChessPieceConstant() + player.getPlayer();
         board[currentSquare.getX() + player1PlusPlayer2Minus][currentSquare.getY()] = piece;
+        board[currentSquare.getX()][currentSquare.getY()] = EMPTY;
         currentSquare = lastSquare;
         lastSquare = null;
     }

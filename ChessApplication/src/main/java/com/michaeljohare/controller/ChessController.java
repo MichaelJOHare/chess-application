@@ -15,6 +15,7 @@ import static com.michaeljohare.model.Board.*;
 
 public class ChessController implements ChessControllerListener {
     private ChessGUIListener gui;
+    //private StockfishController stockfish;
     private final Player player1;
     private final Player player2;
     private int turnCounter;
@@ -27,14 +28,16 @@ public class ChessController implements ChessControllerListener {
     private ChessPiece playerPiece;
     private ChessPiece capturedPiece;
     private ChessPiece previousPiece;
-    private Stack<ChessPiece> previousPieces;
+    private final Stack<ChessPiece> previousPieces;
     private ChessPiece previouslyPromotedPawn;
     private ChessPiece promotedPiece;
     private final String lineBreaks = "\n\n\n\n\n";
 
     public ChessController() {
+        //stockfish = new StockfishController();
         player1 = new Player(Board.PLAYER_1);
         player2 = new Player(Board.PLAYER_2);
+        previousPieces = new Stack<>();
         turnCounter = 0;
         player1HasCastled = false;
         player2HasCastled = false;
@@ -57,10 +60,10 @@ public class ChessController implements ChessControllerListener {
         Square targetSquare = new Square(row, col);
         if (playerPiece.getMoves().contains(targetSquare)) {
             previousMoveWasCastle = false;
-            if (!isEmpty(row, col)) {
-                handleSecondClickCapture(row, col);
-            } else {
+            if (isEmpty(row, col)) {
                 handleSecondClick(row, col);
+            } else {
+                handleSecondClickCapture(row, col);
             }
             checkIfPawnPromotion();
             handleLegalMove(row);
@@ -132,8 +135,13 @@ public class ChessController implements ChessControllerListener {
             return;
         }
 
-        if (playerPiece instanceof Pawn && previousPiece instanceof Pawn) {
-            handleEnPassantFlag();
+        if (playerPiece instanceof Pawn) {
+            if (enPassantFlag && previousPieces.size() > 0) {
+                previousPiece = previousPieces.peek();
+                handleEnPassantFlagAfterUndo();
+            } else if (previousPiece instanceof Pawn) {
+                handleEnPassantFlag();
+            }
         }
 
         List<Square> moves = playerPiece.getMoves();
@@ -144,27 +152,9 @@ public class ChessController implements ChessControllerListener {
             return;
         }
 
+        //getComputerPlayerMove();
         gui.setHighlightedSquares(moves);
         isFirstClick = false;
-    }
-
-    private void handleSecondClickCapture(int row, int col) {
-
-        enPassantFlag = false;
-        playerPiece.movePiece(new Square(row, col));
-
-        if (turnCounter % 2 == 0) {
-            capturedPiece = player2.getPlayerPiece(new Square(row, col));
-            player2.capturePiece(capturedPiece);
-            gui.addRemoveCapture1Area(capturedPiece, true);
-            gui.updateCapturedPiecesDisplay();
-        } else {
-            capturedPiece = player1.getPlayerPiece(new Square(row, col));
-            player1.capturePiece(capturedPiece);
-            gui.addRemoveCapture2Area(capturedPiece, true);
-            gui.updateCapturedPiecesDisplay();
-        }
-
     }
 
     private void handleSecondClick(int row, int col) {
@@ -210,9 +200,32 @@ public class ChessController implements ChessControllerListener {
         if (playerPiece instanceof Rook) ((Rook) playerPiece).hasMoved = true;
     }
 
+    private void handleSecondClickCapture(int row, int col) {
+
+        enPassantFlag = false;
+        playerPiece.movePiece(new Square(row, col));
+
+        if (turnCounter % 2 == 0) {
+            capturedPiece = player2.getPlayerPiece(new Square(row, col));
+            player2.capturePiece(capturedPiece);
+            gui.addRemoveCapture1Area(capturedPiece, true);
+            gui.updateCapturedPiecesDisplay();
+        } else {
+            capturedPiece = player1.getPlayerPiece(new Square(row, col));
+            player1.capturePiece(capturedPiece);
+            gui.addRemoveCapture2Area(capturedPiece, true);
+            gui.updateCapturedPiecesDisplay();
+        }
+
+    }
+
     private void handleLegalMove(int row) {
 
         handlePawnPromotion(row);
+
+        if (turnCounter > 0) {
+            previousPieces.push(previousPiece);
+        }
 
         gui.updateGUI();
         gui.clearHighlightedSquares();
@@ -277,6 +290,25 @@ public class ChessController implements ChessControllerListener {
     }
 
     private void handleUndoCapture() {
+        // Undo en passant
+        if (capturedPiece instanceof Pawn && previousPiece instanceof Pawn) {
+            boolean wasEnPassantPossiblePreviousMove = ((Pawn) previousPiece).canCaptureEnPassantLeft ||
+                    ((Pawn) previousPiece).canCaptureEnPassantRight;
+
+            if (turnCounter % 2 == 0 && wasEnPassantPossiblePreviousMove) {
+                previousPiece.undoEnPassant(capturedPiece.getChessPieceConstant() + player1.getPlayer(), -1);
+                player1.undoCapturePiece(capturedPiece);
+                gui.addRemoveCapture2Area(capturedPiece, false);
+
+            } else {
+                previousPiece.undoEnPassant(capturedPiece.getChessPieceConstant() + player2.getPlayer(), 1);
+                player2.undoCapturePiece(capturedPiece);
+                gui.addRemoveCapture1Area(capturedPiece, false);
+            }
+            return;
+        }
+
+        // Undo capture
         if (turnCounter % 2 == 0) {
             previousPiece.undoMovePiece(capturedPiece.getChessPieceConstant() + player1.getPlayer());
             player1.undoCapturePiece(capturedPiece);
@@ -334,10 +366,14 @@ public class ChessController implements ChessControllerListener {
         turnCounter--;
         playerPiece = null;
         isFirstClick = true;
+        enPassantFlag = !enPassantFlag;
         if (turnCounter % 2 == 0) {
             gui.updateLogTextArea(lineBreaks + " It's the white player's turn to move.");
         } else if (turnCounter % 2 == 1) {
             gui.updateLogTextArea(lineBreaks+ " It's the black player's turn to move.");
+        }
+        if (turnCounter > 0) {
+            previousPiece = previousPieces.pop();
         }
     }
 
@@ -369,14 +405,32 @@ public class ChessController implements ChessControllerListener {
         boolean isLeftSideOfPiece = previousPiece.getCurrentSquare().getY() == playerPiece.getCurrentSquare().getY() - 1;
         boolean isRightSideOfPiece = previousPiece.getCurrentSquare().getY() == playerPiece.getCurrentSquare().getY() + 1;
 
-        if (((Pawn) previousPiece).isEnPassantVulnerable() && (isSameRow) && (isRightSideOfPiece)) {
+        if (((Pawn) previousPiece).isEnPassantVulnerable() && isSameRow && isRightSideOfPiece) {
             ((Pawn)playerPiece).canCaptureEnPassantLeft = false;
             ((Pawn) playerPiece).canCaptureEnPassantRight = true;
             enPassantFlag = true;
-        } else if (((Pawn) previousPiece).isEnPassantVulnerable() && (isSameRow) && (isLeftSideOfPiece)){
+        } else if (((Pawn) previousPiece).isEnPassantVulnerable() && isSameRow && isLeftSideOfPiece){
             ((Pawn)playerPiece).canCaptureEnPassantRight =false;
             ((Pawn)playerPiece).canCaptureEnPassantLeft = true;
             enPassantFlag = true;
+        } else {
+            ((Pawn)playerPiece).canCaptureEnPassantLeft = false;
+            ((Pawn)playerPiece).canCaptureEnPassantRight =false;
+            enPassantFlag = false;
+        }
+    }
+
+    private void handleEnPassantFlagAfterUndo() {
+        boolean isSameRow = previousPiece.getCurrentSquare().getX() == playerPiece.getCurrentSquare().getX();
+        boolean isLeftSideOfPiece = previousPiece.getCurrentSquare().getY() == playerPiece.getCurrentSquare().getY() - 1;
+        boolean isRightSideOfPiece = previousPiece.getCurrentSquare().getY() == playerPiece.getCurrentSquare().getY() + 1;
+
+        if (isSameRow && isRightSideOfPiece) {
+            ((Pawn)playerPiece).canCaptureEnPassantLeft = false;
+            ((Pawn) playerPiece).canCaptureEnPassantRight = true;
+        } else if (isSameRow && isLeftSideOfPiece){
+            ((Pawn)playerPiece).canCaptureEnPassantRight =false;
+            ((Pawn)playerPiece).canCaptureEnPassantLeft = true;
         } else {
             ((Pawn)playerPiece).canCaptureEnPassantLeft = false;
             ((Pawn)playerPiece).canCaptureEnPassantRight =false;
@@ -390,6 +444,17 @@ public class ChessController implements ChessControllerListener {
             pawnPromotionFlag = true;
         }
     }
+
+/*    public void getComputerPlayerMove() {
+        try {
+            String computerMove = stockfish.getBestMove("startpos moves e2e4");
+
+            System.out.println("Computer player move: " + computerMove);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }*/
 
     private boolean isEmpty(int x, int y) {
         return board[x][y].equals(EMPTY);

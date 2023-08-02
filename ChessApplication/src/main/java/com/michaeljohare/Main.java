@@ -27,9 +27,12 @@ public class Main {
     /*
     * TODO:
     *  Implement undoing more than 1 move
+    *           - Shouldn't be too difficult (famous last words) using Stack of previous pieces
     *  Implement Stockfish?
-    *  Implement undoing en passant
-    *  Test and debug en passant (undo en passant)
+    *
+    *  Test en passant edge cases and debug undo en passant
+    *                                 - (find way to allow move -> undo -> en passant -> undo -> en passant)
     *  Refactor ChessController?
+    *       - Bloated methods, too many flags
     * */
 }

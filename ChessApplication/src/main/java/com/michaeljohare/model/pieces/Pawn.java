@@ -73,7 +73,6 @@ public class Pawn extends ChessPiece {
                     if (!player.getKing().isInCheck()) {
                         availableMoves.add(new Square(x - 1, y + 1));
                     }
-                    board[x - 1][y + 1] = EMPTY;
                     undoEnPassant(piece, 1);
                 }
             }
@@ -85,7 +84,6 @@ public class Pawn extends ChessPiece {
                     if (!player.getKing().isInCheck()) {
                         availableMoves.add(new Square(x - 1, y - 1));
                     }
-                    board[x - 1][y - 1] = EMPTY;
                     undoEnPassant(piece, 1);
                 }
             }
@@ -134,7 +132,6 @@ public class Pawn extends ChessPiece {
                     if (!player.getKing().isInCheck()) {
                         availableMoves.add(new Square(x + 1, y + 1));
                     }
-                    board[x + 1][y + 1] = EMPTY;
                     undoEnPassant(piece, -1);
                 }
             }
@@ -146,7 +143,6 @@ public class Pawn extends ChessPiece {
                     if (!player.getKing().isInCheck()) {
                         availableMoves.add(new Square(x + 1, y - 1));
                     }
-                    board[x + 1][y - 1] = EMPTY;
                     undoEnPassant(piece, -1);
                 }
             }
