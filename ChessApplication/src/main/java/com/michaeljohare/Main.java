@@ -29,7 +29,7 @@ public class Main {
     *  Implement undoing more than 1 move
     *           - Shouldn't be too difficult (famous last words) using Stack of previous pieces
     *  Implement Stockfish?
-    *
+    *           - Basic structure is implemented, will start with just highlighting best move
     *  Test en passant edge cases and debug undo en passant
     *                                 - (find way to allow move -> undo -> en passant -> undo -> en passant)
     *  Refactor ChessController?

@@ -28,6 +28,12 @@ public abstract class ChessPiece {
         board[end.getX()][end.getY()] = getChessPieceConstant() + player.getPlayer();
         board[currentSquare.getX()][currentSquare.getY()] = EMPTY;
         lastSquare = currentSquare;
+        currentSquare = end;
+    }
+    public void movePieceActual(Square end) {
+        board[end.getX()][end.getY()] = getChessPieceConstant() + player.getPlayer();
+        board[currentSquare.getX()][currentSquare.getY()] = EMPTY;
+        lastSquare = currentSquare;
         previousSquares.push(lastSquare);
         currentSquare = end;
     }
@@ -37,6 +43,21 @@ public abstract class ChessPiece {
         currentSquare = lastSquare;
         lastSquare = null;
     }
+    public void undoMovePieceActual(String piece) {
+        board[lastSquare.getX()][lastSquare.getY()] = getChessPieceConstant() + player.getPlayer();
+        board[currentSquare.getX()][currentSquare.getY()] = piece;
+        currentSquare = lastSquare;
+        lastSquare = previousSquares.pop();
+    }
+/*    public void movePieceEnPassant(Square end, int posRightNegLeft) {
+        board[end.getX()][end.getY()] = getChessPieceConstant() + player.getPlayer();
+        board[currentSquare.getX()][currentSquare.getY() + posRightNegLeft] = EMPTY;
+        board[currentSquare.getX()][currentSquare.getY()] = EMPTY;
+        lastSquare = currentSquare;
+        currentSquare = end;
+    }
+    Find way to check for enPassantLeft or right in ChessController to implement this
+*/
     public void undoEnPassant(String piece, int player1PlusPlayer2Minus) {
         board[lastSquare.getX()][lastSquare.getY()] = getChessPieceConstant() + player.getPlayer();
         board[currentSquare.getX() + player1PlusPlayer2Minus][currentSquare.getY()] = piece;

@@ -115,7 +115,7 @@ public class Player {
     }
 
     public void promotePawn(ChessPiece pawn, ChessPiece promotedPiece) {
-        Board.board[pawn.getCurrentSquare().getX()][pawn.getCurrentSquare().getY()] =
+        board[pawn.getCurrentSquare().getX()][pawn.getCurrentSquare().getY()] =
                 promotedPiece.getChessPieceConstant() + getPlayer();
 
         for (int i = 0; i < 16; i++) {
@@ -127,7 +127,7 @@ public class Player {
     }
 
     public void unPromotePawn(ChessPiece previouslyPromotedPawn, ChessPiece promotedPiece) {
-        Board.board[previouslyPromotedPawn.getCurrentSquare().getX()][previouslyPromotedPawn.getCurrentSquare().getY()] =
+        board[previouslyPromotedPawn.getCurrentSquare().getX()][previouslyPromotedPawn.getCurrentSquare().getY()] =
                 previouslyPromotedPawn.getChessPieceConstant() + getPlayer();
 
         for (int i = 0; i < 16; i++) {
